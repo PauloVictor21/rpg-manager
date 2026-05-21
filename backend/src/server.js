@@ -7,6 +7,7 @@ import classesRouter from './routes/classes.js'
 import habilidadesRouter from './routes/habilidades.js'
 import itensRouter from './routes/itens.js'
 import questsRouter from './routes/quests.js'
+import authRouter from './routes/auth.js'
 
 dotenv.config()
 
@@ -24,5 +25,6 @@ app.use('/classes', classesRouter)
 app.use('/habilidades', habilidadesRouter)
 app.use('/itens', itensRouter)
 app.use('/quests', questsRouter)
+app.use('/auth', authRouter)
 
 app.listen(3001, () => console.log('Servidor rodando na porta 3001'))

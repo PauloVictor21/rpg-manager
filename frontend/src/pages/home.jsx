@@ -6,7 +6,7 @@ import FormHabilidade from '../components/FormHabilidade'
 import FormItem from '../components/FormItem'
 import FormQuest from '../components/FormQuest'
 
-function Home() {
+function Home({ usuario, onLogout }) {
   const [painelAberto, setPainelAberto] = useState(null)
   const [personagem, setPersonagem] = useState(null)
   const [quests, setQuests] = useState([])
@@ -261,7 +261,7 @@ function Home() {
       )}
 
       {/* Botão de missões direita */}
-      <div className="flex flex-col items-center py-6 px-2 bg-[#555559d6] border-l border-[#ffffff10] w-14">
+      <div className="flex flex-col items-center justify-between py-6 px-2 bg-[#555559d6] border-l border-[#ffffff10] w-14 h-full">
         <button
           onClick={() => togglePainel('missoes')}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all
@@ -270,6 +270,13 @@ function Home() {
               : 'hover:bg-[#ffffff10]'}`}
         >
           <img src="/images/icone-quest.png" alt="missoes" className="w-7 h-7 object-contain" />
+        </button>
+        <button
+          onClick={onLogout}
+          className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900 transition-all text-lg"
+          title="Sair"
+        >
+          ⏻
         </button>
       </div>
 
