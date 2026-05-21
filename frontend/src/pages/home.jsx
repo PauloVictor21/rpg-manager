@@ -1,11 +1,23 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
+import FormPersonagem from '../components/FormPersonagem'
+import FormClasse from '../components/FormClasse'
+import FormHabilidade from '../components/FormHabilidade'
+import FormItem from '../components/FormItem'
+import FormQuest from '../components/FormQuest'
 
 function Home() {
   const [painelAberto, setPainelAberto] = useState(null)
   const [personagem, setPersonagem] = useState(null)
   const [quests, setQuests] = useState([])
   const [habilidades, setHabilidades] = useState([])
+  const [listaPersonagens, setListaPersonagens] = useState([])
+  const [subPainel, setSubPainel] = useState(null)
+  const [mostrarFormPersonagem, setMostrarFormPersonagem] = useState(false)
+  const [mostrarFormClasse, setMostrarFormClasse] = useState(false)
+  const [mostrarFormHabilidade, setMostrarFormHabilidade] = useState(false)
+  const [mostrarFormItem, setMostrarFormItem] = useState(false)
+  const [mostrarFormQuest, setMostrarFormQuest] = useState(false)
 
   useEffect(() => {
   api.get('/personagens/p1')
@@ -17,12 +29,14 @@ function Home() {
 
       return Promise.all([
         Promise.all(questIds.map(id => api.get(`/quests/${id}`))),
-        Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`)))
+        Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`))),
+        api.get('/personagens')
       ])
     })
-    .then(([questsRes, habilidadesRes]) => {
-      setQuests(questsRes.map(r => r.data))
-      setHabilidades(habilidadesRes.map(r => r.data))
+    .then(([questsRes, habilidadesRes, personagensRes]) => {
+    setQuests(questsRes.map(r => r.data))
+    setHabilidades(habilidadesRes.map(r => r.data))
+    setListaPersonagens(personagensRes.data)
     })
     .catch(err => console.log(err))
   }, [])
@@ -30,9 +44,21 @@ function Home() {
   const togglePainel = (painel) => {
     setPainelAberto(painelAberto === painel ? null : painel)
   }
+  const carregarPersonagem = async (p) => {
+    const questIds = p.quests.map(q => q.questId)
+    const habilidadeIds = p.habilidades
 
+    const [questsRes, habilidadesRes] = await Promise.all([
+      Promise.all(questIds.map(id => api.get(`/quests/${id}`))),
+      Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`)))
+    ])
+
+    setPersonagem(p)
+    setQuests(questsRes.map(r => r.data))
+    setHabilidades(habilidadesRes.map(r => r.data))
+  }
   return (
-    <div className="flex h-screen bg-[#0b0b2c] text-white overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#0b1c2c] text-white overflow-hidden font-sans">
 
       {/* Painel esquerdo - Personagens */}
       {painelAberto === 'personagens' && (
@@ -45,11 +71,75 @@ function Home() {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            {['Lista de personagens', 'Adicionar novo personagem', 'Adicionar nova classe'].map((item) => (
-              <button key={item} className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-                {item}
-              </button>
-            ))}
+            <button
+              onClick={() => setSubPainel(subPainel === 'lista' ? null : 'lista')}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Lista de personagens
+            </button>
+            <button
+              onClick={() => setMostrarFormPersonagem(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar novo personagem
+            </button>
+            <button
+              onClick={() => setMostrarFormClasse(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar nova classe
+            </button>
+          </div>
+
+          {/* Lista de personagens */}
+          {subPainel === 'lista' && (
+            <div className="flex flex-col gap-2 mt-2">
+              {listaPersonagens.map((p) => (
+                <button
+                  key={p._id}
+                  onClick={() => carregarPersonagem(p)}
+                  className="w-full py-2 px-4 rounded-lg bg-[#ffffff06] border border-[#ffffff10] text-sm text-gray-300 hover:border-purple-500 hover:text-white transition text-left">
+                  {p.nome}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Painel esquerdo - Habilidades */}
+      {painelAberto === 'habilidades' && (
+        <div className="flex flex-col w-72 bg-[#1a1a2e] border-r border-[#ffffff15] p-5 gap-5 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-[#ffffff15] pb-3">
+            <div className="flex items-center gap-2">
+              <img src="/images/icone-menu-habilidades.png" alt="Habilidades" className="w-7 h-7 object-contain" />
+              <span className="font-bold text-sm tracking-widest uppercase text-gray-300">Habilidades</span>
+            </div>
+            <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setMostrarFormHabilidade(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar habilidade
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Painel esquerdo - Inventário */}
+      {painelAberto === 'inventario' && (
+        <div className="flex flex-col w-72 bg-[#1a1a2e] border-r border-[#ffffff15] p-5 gap-5 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-[#ffffff15] pb-3">
+            <div className="flex items-center gap-2">
+              <img src="/images/icone-menu-itens.png" alt="Inventário" className="w-7 h-7 object-contain" />
+              <span className="font-bold text-sm tracking-widest uppercase text-gray-300">Inventário</span>
+            </div>
+            <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => setMostrarFormItem(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar item
+            </button>
           </div>
         </div>
       )}
@@ -151,6 +241,11 @@ function Home() {
               <img src="/images/icone-quest.png" alt="quest" className="w-7 h-7 object-contain" />
             </div>
           </div>
+          <button
+            onClick={() => setMostrarFormQuest(true)}
+            className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+            Adicionar quest
+          </button>
           <div className="flex flex-col gap-4">
             {quests.map((quest, i) => (
               <div key={i} className="flex flex-col gap-1 p-3 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
@@ -177,6 +272,41 @@ function Home() {
           <img src="/images/icone-quest.png" alt="missoes" className="w-7 h-7 object-contain" />
         </button>
       </div>
+
+      {mostrarFormPersonagem && (
+        <FormPersonagem
+          onFechar={() => setMostrarFormPersonagem(false)}
+          onSalvar={() => api.get('/personagens').then(res => setListaPersonagens(res.data))}
+        />
+      )}
+
+      {mostrarFormClasse && (
+        <FormClasse
+          onFechar={() => setMostrarFormClasse(false)}
+          onSalvar={() => api.get('/classes').then(res => setClasses(res.data))}
+        />
+      )}
+
+      {mostrarFormHabilidade && (
+        <FormHabilidade
+          onFechar={() => setMostrarFormHabilidade(false)}
+          onSalvar={() => api.get('/habilidades').then(res => res.data)}
+        />
+      )}
+
+      {mostrarFormItem && (
+        <FormItem
+          onFechar={() => setMostrarFormItem(false)}
+          onSalvar={() => api.get('/itens').then(res => res.data)}
+        />
+      )}
+
+      {mostrarFormQuest && (
+        <FormQuest
+          onFechar={() => setMostrarFormQuest(false)}
+          onSalvar={() => api.get('/quests').then(res => res.data)}
+        />
+      )}
 
     </div>
   )
