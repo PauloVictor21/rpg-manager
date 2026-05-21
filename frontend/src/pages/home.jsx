@@ -76,16 +76,20 @@ function Home({ usuario, onLogout }) {
               className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
               Lista de personagens
             </button>
-            <button
-              onClick={() => setMostrarFormPersonagem(true)}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Adicionar novo personagem
-            </button>
-            <button
-              onClick={() => setMostrarFormClasse(true)}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Adicionar nova classe
-            </button>
+            {usuario.tipo === 'mestre' && (
+              <>
+                <button
+                  onClick={() => setMostrarFormPersonagem(true)}
+                  className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                  Adicionar novo personagem
+                </button>
+                <button
+                  onClick={() => setMostrarFormClasse(true)}
+                  className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                  Adicionar nova classe
+                </button>
+              </>
+            )}
           </div>
 
           {/* Lista de personagens */}
@@ -115,11 +119,13 @@ function Home({ usuario, onLogout }) {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setMostrarFormHabilidade(true)}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Adicionar habilidade
-            </button>
+            {usuario.tipo === 'mestre' && (
+              <button
+                onClick={() => setMostrarFormHabilidade(true)}
+                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                Adicionar habilidade
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -135,11 +141,13 @@ function Home({ usuario, onLogout }) {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setMostrarFormItem(true)}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Adicionar item
-            </button>
+            {usuario.tipo === 'mestre' && (
+              <button
+                onClick={() => setMostrarFormItem(true)}
+                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                Adicionar item
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -241,11 +249,13 @@ function Home({ usuario, onLogout }) {
               <img src="/images/icone-quest.png" alt="quest" className="w-7 h-7 object-contain" />
             </div>
           </div>
-          <button
-            onClick={() => setMostrarFormQuest(true)}
-            className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-            Adicionar quest
-          </button>
+          {usuario.tipo === 'mestre' && (
+            <button
+              onClick={() => setMostrarFormQuest(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar quest
+            </button>
+          )}
           <div className="flex flex-col gap-4">
             {quests.map((quest, i) => (
               <div key={i} className="flex flex-col gap-1 p-3 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
