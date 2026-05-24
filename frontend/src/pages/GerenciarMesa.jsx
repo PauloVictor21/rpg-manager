@@ -13,8 +13,13 @@ function GerenciarMesa({ mesa, usuario, onFechar }) {
   }, [])
 
   const getNomeUsuario = (usuarioId) => {
-    const usuario = usuarios.find(u => u._id === usuarioId)
-    return usuario ? usuario.nome : usuarioId
+    const u = usuarios.find(u => u._id === usuarioId)
+    return u ? u.nome : usuarioId
+  }
+
+  const getNomePersonagem = (personagemId) => {
+    const p = personagens.find(p => p._id === personagemId)
+    return p ? p.nome : 'Sem personagem'
   }
 
   const handleDesignar = async (usuarioId, personagemId) => {
@@ -32,6 +37,18 @@ function GerenciarMesa({ mesa, usuario, onFechar }) {
     }
   }
 
+  const handleRemoverJogador = async (usuarioId) => {
+    try {
+      await api.put('/mesas/remover', {
+        mesaId: mesa._id,
+        usuarioId
+      })
+      setJogadores(prev => prev.filter(j => j.usuarioId !== usuarioId))
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-[#0b0b2c] text-white flex flex-col items-center justify-center z-50 p-8">
       <div className="w-full max-w-lg flex flex-col gap-6">
@@ -42,29 +59,60 @@ function GerenciarMesa({ mesa, usuario, onFechar }) {
           <div className="w-6" />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-xs text-gray-400 tracking-widest uppercase">Código da mesa</p>
-          <p className="text-2xl font-bold tracking-widest text-purple-400">{mesa.codigo}</p>
+        {/* Código da mesa */}
+        <div className="flex flex-col gap-1 p-4 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
+          <p className="text-xs text-gray-500 tracking-widest uppercase">Código da mesa</p>
+          <div className="flex items-center justify-between">
+            <p className="text-2xl font-bold tracking-widest text-purple-400">{mesa.codigo}</p>
+            <button
+              onClick={() => navigator.clipboard.writeText(mesa.codigo)}
+              className="text-xs text-gray-400 hover:text-white border border-[#ffffff20] px-3 py-1 rounded-full transition">
+              Copiar
+            </button>
+          </div>
+          <p className="text-xs text-gray-600">Compartilhe esse código com os jogadores</p>
         </div>
 
+        {/* Jogadores */}
         <div className="flex flex-col gap-3">
-          <p className="text-xs text-gray-400 tracking-widest uppercase">Jogadores na mesa</p>
+          <p className="text-xs text-gray-400 tracking-widest uppercase">Jogadores na mesa ({jogadores.length})</p>
           {jogadores.length === 0 && (
-            <p className="text-sm text-gray-500">Nenhum jogador entrou ainda</p>
+            <div className="p-4 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
+              <p className="text-sm text-gray-500 text-center">Nenhum jogador entrou ainda</p>
+            </div>
           )}
           {jogadores.map((jogador, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
-              <span className="text-sm text-gray-300 flex-1">{getNomeUsuario(jogador.usuarioId)}</span>
-              <select
-                value={jogador.personagemId || ''}
-                onChange={e => handleDesignar(jogador.usuarioId, e.target.value)}
-                className="bg-[#ffffff08] border border-[#ffffff20] rounded-full py-1 px-3 text-sm text-gray-300 focus:outline-none focus:border-purple-500"
-              >
-                <option value="">Sem personagem</option>
-                {personagens.map(p => (
-                  <option key={p._id} value={p._id}>{p.nome}</option>
-                ))}
-              </select>
+            <div key={i} className="flex flex-col gap-2 p-3 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-400">👤</span>
+                  <span className="text-sm font-bold text-gray-200">{getNomeUsuario(jogador.usuarioId)}</span>
+                </div>
+                <button
+                  onClick={() => handleRemoverJogador(jogador.usuarioId)}
+                  className="text-xs text-red-400 hover:text-red-300 border border-red-900 px-3 py-1 rounded-full transition">
+                  Remover
+                </button>
+              </div>
+              <div className="flex items-center gap-2 pl-6">
+                <span className="text-xs text-gray-500">Personagem:</span>
+                <select
+                  value={jogador.personagemId || ''}
+                  onChange={e => handleDesignar(jogador.usuarioId, e.target.value)}
+                  className="flex-1 bg-[#ffffff08] border border-[#ffffff20] rounded-full py-1 px-3 text-sm text-gray-300 focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">Sem personagem</option>
+                  {personagens.map(p => (
+                    <option key={p._id} value={p._id}>{p.nome}</option>
+                  ))}
+                </select>
+              </div>
+              {jogador.personagemId && (
+                <div className="flex items-center gap-2 pl-6">
+                  <span className="text-xs text-gray-500">Designado:</span>
+                  <span className="text-xs text-purple-400">{getNomePersonagem(jogador.personagemId)}</span>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -77,4 +77,19 @@ router.put('/designar', async (req, res) => {
   }
 })
 
+// Remover jogador da mesa
+router.put('/remover', async (req, res) => {
+  try {
+    const { mesaId, usuarioId } = req.body
+    const mesa = await Mesa.findById(mesaId)
+    if (!mesa) return res.status(404).json({ erro: 'Mesa não encontrada' })
+
+    mesa.jogadores = mesa.jogadores.filter(j => j.usuarioId !== usuarioId)
+    await mesa.save()
+    res.json(mesa)
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao remover jogador' })
+  }
+})
+
 export default router
