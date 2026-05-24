@@ -5,8 +5,9 @@ import FormClasse from '../components/FormClasse'
 import FormHabilidade from '../components/FormHabilidade'
 import FormItem from '../components/FormItem'
 import FormQuest from '../components/FormQuest'
+import GerenciarMesa from './GerenciarMesa'
 
-function Home({ usuario, onLogout }) {
+function Home({ usuario, mesa, onLogout }) {
   const [painelAberto, setPainelAberto] = useState(null)
   const [personagem, setPersonagem] = useState(null)
   const [classes, setClasses] = useState([])
@@ -19,6 +20,7 @@ function Home({ usuario, onLogout }) {
   const [mostrarFormHabilidade, setMostrarFormHabilidade] = useState(false)
   const [mostrarFormItem, setMostrarFormItem] = useState(false)
   const [mostrarFormQuest, setMostrarFormQuest] = useState(false)
+  const [mostrarGerenciarMesa, setMostrarGerenciarMesa] = useState(false)
 
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
@@ -38,10 +40,18 @@ function Home({ usuario, onLogout }) {
     api.get('/personagens')
       .then(res => {
         setListaPersonagens(res.data)
-        if (res.data.length > 0) return carregarPersonagem(res.data[0])
+        if (usuario.tipo === 'jogador' && mesa) {
+          const jogador = mesa.jogadores.find(j => j.usuarioId === usuario.id)
+          if (jogador && jogador.personagemId) {
+            const personagemDesignado = res.data.find(p => p._id === jogador.personagemId)
+            if (personagemDesignado) return carregarPersonagem(personagemDesignado)
+          }
+        } else if (res.data.length > 0) {
+          return carregarPersonagem(res.data[0])
+        }
       })
       .catch(err => console.log(err))
-  }, [])
+  }, [])  
 
   const togglePainel = (painel) => {
     setPainelAberto(painelAberto === painel ? null : painel)
@@ -60,11 +70,13 @@ function Home({ usuario, onLogout }) {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => setSubPainel(subPainel === 'lista' ? null : 'lista')}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Lista de personagens
-            </button>
+            {usuario.tipo === 'mestre' && (
+              <button
+                onClick={() => setSubPainel(subPainel === 'lista' ? null : 'lista')}
+                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                Lista de personagens
+              </button>
+            )}
             {usuario.tipo === 'mestre' && (
               <>
                 <button
@@ -261,6 +273,15 @@ function Home({ usuario, onLogout }) {
 
       {/* Botão de missões direita */}
       <div className="flex flex-col items-center justify-between py-6 px-2 bg-[#555559d6] border-l border-[#ffffff10] w-14 h-full">
+        {usuario.tipo === 'mestre' && (
+          <button
+            onClick={() => setMostrarGerenciarMesa(true)}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-purple-900 transition-all text-lg"
+            title="Gerenciar mesa"
+          >
+            ⚙️
+          </button>
+        )}
         <button
           onClick={() => togglePainel('missoes')}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all
@@ -311,6 +332,14 @@ function Home({ usuario, onLogout }) {
         <FormQuest
           onFechar={() => setMostrarFormQuest(false)}
           onSalvar={() => api.get('/quests').then(res => res.data)}
+        />
+      )}
+
+      {mostrarGerenciarMesa && (
+        <GerenciarMesa
+          mesa={mesa}
+          usuario={usuario}
+          onFechar={() => setMostrarGerenciarMesa(false)}
         />
       )}
 

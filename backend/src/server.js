@@ -9,6 +9,7 @@ import itensRouter from './routes/itens.js'
 import questsRouter from './routes/quests.js'
 import authRouter from './routes/auth.js'
 import mesasRouter from './routes/mesas.js'
+import usuariosRouter from './routes/usuarios.js'
 
 dotenv.config()
 
@@ -28,5 +29,6 @@ app.use('/itens', itensRouter)
 app.use('/quests', questsRouter)
 app.use('/auth', authRouter)
 app.use('/mesas', mesasRouter)
+app.use('/usuarios', usuariosRouter)
 
 app.listen(3001, () => console.log('Servidor rodando na porta 3001'))
