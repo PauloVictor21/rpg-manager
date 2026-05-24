@@ -6,6 +6,7 @@ import FormHabilidade from '../components/FormHabilidade'
 import FormItem from '../components/FormItem'
 import FormQuest from '../components/FormQuest'
 import GerenciarMesa from './GerenciarMesa'
+import FichaPersonagem from './FichaPersonagem'
 
 function Home({ usuario, mesa, onLogout }) {
   const [painelAberto, setPainelAberto] = useState(null)
@@ -21,6 +22,7 @@ function Home({ usuario, mesa, onLogout }) {
   const [mostrarFormItem, setMostrarFormItem] = useState(false)
   const [mostrarFormQuest, setMostrarFormQuest] = useState(false)
   const [mostrarGerenciarMesa, setMostrarGerenciarMesa] = useState(false)
+  const [mostrarFicha, setMostrarFicha] = useState(false)
 
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
@@ -180,7 +182,9 @@ function Home({ usuario, mesa, onLogout }) {
 
         {/* Avatar */}
         <div className="relative">
-          <div className="w-44 h-44 rounded-full overflow-hidden shadow-2xl shadow-blue-900 border-4 border-[#ffffff15] bg-blue-900 flex items-center justify-center">
+          <div
+            onClick={() => setMostrarFicha(true)}
+            className="w-44 h-44 rounded-full overflow-hidden shadow-2xl shadow-blue-900 border-4 border-[#ffffff15] bg-blue-900 flex items-center justify-center cursor-pointer hover:border-purple-500 transition">
             <img src="/images/Personagem.png" alt="Personagem" className="w-36 h-36 object-contain" />
           </div>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#1a1a2e] border border-[#ffffff20] px-4 py-1 rounded-full text-xs tracking-widest text-gray-300 whitespace-nowrap">
@@ -273,15 +277,6 @@ function Home({ usuario, mesa, onLogout }) {
 
       {/* Botão de missões direita */}
       <div className="flex flex-col items-center justify-between py-6 px-2 bg-[#555559d6] border-l border-[#ffffff10] w-14 h-full">
-        {usuario.tipo === 'mestre' && (
-          <button
-            onClick={() => setMostrarGerenciarMesa(true)}
-            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-purple-900 transition-all text-lg"
-            title="Gerenciar mesa"
-          >
-            ⚙️
-          </button>
-        )}
         <button
           onClick={() => togglePainel('missoes')}
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all
@@ -291,13 +286,24 @@ function Home({ usuario, mesa, onLogout }) {
         >
           <img src="/images/icone-quest.png" alt="missoes" className="w-7 h-7 object-contain" />
         </button>
-        <button
-          onClick={onLogout}
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900 transition-all text-lg"
-          title="Sair"
-        >
-          ⏻
-        </button>
+        <div className="flex flex-col items-center gap-3">
+          {usuario.tipo === 'mestre' && (
+            <button
+              onClick={() => setMostrarGerenciarMesa(true)}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-purple-900 transition-all text-lg"
+              title="Gerenciar mesa"
+            >
+              ⚙️
+            </button>
+          )}
+          <button
+            onClick={onLogout}
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-900 transition-all text-lg"
+            title="Sair"
+          >
+            ⏻
+          </button>
+        </div>
       </div>
 
       {mostrarFormPersonagem && (
@@ -340,6 +346,13 @@ function Home({ usuario, mesa, onLogout }) {
           mesa={mesa}
           usuario={usuario}
           onFechar={() => setMostrarGerenciarMesa(false)}
+        />
+      )}
+
+      {mostrarFicha && personagem && (
+        <FichaPersonagem
+          personagem={personagem}
+          onFechar={() => setMostrarFicha(false)}
         />
       )}
 
