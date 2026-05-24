@@ -9,6 +9,7 @@ import FormQuest from '../components/FormQuest'
 function Home({ usuario, onLogout }) {
   const [painelAberto, setPainelAberto] = useState(null)
   const [personagem, setPersonagem] = useState(null)
+  const [classes, setClasses] = useState([])
   const [quests, setQuests] = useState([])
   const [habilidades, setHabilidades] = useState([])
   const [listaPersonagens, setListaPersonagens] = useState([])
@@ -19,31 +20,6 @@ function Home({ usuario, onLogout }) {
   const [mostrarFormItem, setMostrarFormItem] = useState(false)
   const [mostrarFormQuest, setMostrarFormQuest] = useState(false)
 
-  useEffect(() => {
-  api.get('/personagens/p1')
-    .then(res => {
-      setPersonagem(res.data)
-
-      const questIds = res.data.quests.map(q => q.questId)
-      const habilidadeIds = res.data.habilidades
-
-      return Promise.all([
-        Promise.all(questIds.map(id => api.get(`/quests/${id}`))),
-        Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`))),
-        api.get('/personagens')
-      ])
-    })
-    .then(([questsRes, habilidadesRes, personagensRes]) => {
-    setQuests(questsRes.map(r => r.data))
-    setHabilidades(habilidadesRes.map(r => r.data))
-    setListaPersonagens(personagensRes.data)
-    })
-    .catch(err => console.log(err))
-  }, [])
-
-  const togglePainel = (painel) => {
-    setPainelAberto(painelAberto === painel ? null : painel)
-  }
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
     const habilidadeIds = p.habilidades
@@ -56,6 +32,19 @@ function Home({ usuario, onLogout }) {
     setPersonagem(p)
     setQuests(questsRes.map(r => r.data))
     setHabilidades(habilidadesRes.map(r => r.data))
+  }
+
+  useEffect(() => {
+    api.get('/personagens')
+      .then(res => {
+        setListaPersonagens(res.data)
+        if (res.data.length > 0) return carregarPersonagem(res.data[0])
+      })
+      .catch(err => console.log(err))
+  }, [])
+
+  const togglePainel = (painel) => {
+    setPainelAberto(painelAberto === painel ? null : painel)
   }
   return (
     <div className="flex h-screen bg-[#0b1c2c] text-white overflow-hidden font-sans">
