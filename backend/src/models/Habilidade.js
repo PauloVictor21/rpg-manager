@@ -7,7 +7,8 @@ const habilidadeSchema = new mongoose.Schema({
   cura: Number,
   efeito: String,
   custoMana: Number,
-  classe: String
+  classe: String,
+  imagem: String,
 })
 
 export default mongoose.model('Habilidade', habilidadeSchema, 'habilidades')

@@ -7,6 +7,9 @@ import FormItem from '../components/FormItem'
 import FormQuest from '../components/FormQuest'
 import GerenciarMesa from './GerenciarMesa'
 import FichaPersonagem from './FichaPersonagem'
+import AssociarItens from '../components/AssociarItens'
+import PainelHabilidades from '../components/PainelHabilidades'
+import { socket } from '../services/api'
 
 function Home({ usuario, mesa, onLogout }) {
   const [painelAberto, setPainelAberto] = useState(null)
@@ -14,6 +17,7 @@ function Home({ usuario, mesa, onLogout }) {
   const [classes, setClasses] = useState([])
   const [quests, setQuests] = useState([])
   const [habilidades, setHabilidades] = useState([])
+  const [itens, setItens] = useState([])
   const [listaPersonagens, setListaPersonagens] = useState([])
   const [subPainel, setSubPainel] = useState(null)
   const [mostrarFormPersonagem, setMostrarFormPersonagem] = useState(false)
@@ -23,19 +27,24 @@ function Home({ usuario, mesa, onLogout }) {
   const [mostrarFormQuest, setMostrarFormQuest] = useState(false)
   const [mostrarGerenciarMesa, setMostrarGerenciarMesa] = useState(false)
   const [mostrarFicha, setMostrarFicha] = useState(false)
+  const [mostrarAssociar, setMostrarAssociar] = useState(false)
 
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
     const habilidadeIds = p.habilidades
+    const itemIds = p.inventario.map(i => i.itemId)
 
-    const [questsRes, habilidadesRes] = await Promise.all([
+    setPersonagem({ ...p })
+
+    const [questsRes, habilidadesRes, itensRes] = await Promise.all([
       Promise.all(questIds.map(id => api.get(`/quests/${id}`))),
-      Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`)))
+      Promise.all(habilidadeIds.map(id => api.get(`/habilidades/${id}`))),
+      Promise.all(itemIds.map(id => api.get(`/itens/${id}`)))
     ])
 
-    setPersonagem(p)
-    setQuests(questsRes.map(r => r.data))
     setHabilidades(habilidadesRes.map(r => r.data))
+    setItens(itensRes.map(r => r.data))
+    setQuests(questsRes.map(r => r.data))
   }
 
   useEffect(() => {
@@ -53,7 +62,25 @@ function Home({ usuario, mesa, onLogout }) {
         }
       })
       .catch(err => console.log(err))
-  }, [])  
+
+    if (mesa) {
+      console.log('entrando na sala da mesa:', mesa._id)
+      socket.emit('entrar-mesa', mesa._id)
+      socket.on('personagem-atualizado', (personagemAtualizado) => {
+        console.log('evento recebido!', personagemAtualizado.habilidadesEquipadas)
+        setPersonagem(prev => ({ ...prev, 
+          habilidadesEquipadas: personagemAtualizado.habilidadesEquipadas,
+          itensEquipados: personagemAtualizado.itensEquipados,
+          inventario: personagemAtualizado.inventario,
+          habilidades: personagemAtualizado.habilidades
+        }))
+      })
+    }
+
+    return () => {
+      socket.off('personagem-atualizado')
+    }
+  }, []) 
 
   const togglePainel = (painel) => {
     setPainelAberto(painelAberto === painel ? null : painel)
@@ -93,6 +120,13 @@ function Home({ usuario, mesa, onLogout }) {
                 </button>
               </>
             )}
+            {usuario.tipo === 'mestre' && personagem && (
+              <button
+                onClick={() => setMostrarAssociar(true)}
+                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-cyan-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                Associar habilidades e itens
+              </button>
+            )}
           </div>
 
           {/* Lista de personagens */}
@@ -112,7 +146,7 @@ function Home({ usuario, mesa, onLogout }) {
       )}
 
       {/* Painel esquerdo - Habilidades */}
-      {painelAberto === 'habilidades' && (
+      {painelAberto === 'habilidades' && usuario.tipo === 'mestre' && (
         <div className="flex flex-col w-72 bg-[#1a1a2e] border-r border-[#ffffff15] p-5 gap-5 shadow-2xl">
           <div className="flex items-center justify-between border-b border-[#ffffff15] pb-3">
             <div className="flex items-center gap-2">
@@ -122,19 +156,27 @@ function Home({ usuario, mesa, onLogout }) {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            {usuario.tipo === 'mestre' && (
-              <button
-                onClick={() => setMostrarFormHabilidade(true)}
-                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-                Adicionar habilidade
-              </button>
-            )}
+            <button
+              onClick={() => setMostrarFormHabilidade(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar habilidade
+            </button>
           </div>
         </div>
       )}
 
+      {painelAberto === 'habilidades' && usuario.tipo === 'jogador' && personagem && (
+        <PainelHabilidades
+          personagem={personagem}
+          mesa={mesa}
+          modo="habilidades"
+          onFechar={() => setPainelAberto(null)}
+          onAtualizar={() => carregarPersonagem(personagem)}
+        />
+      )}
+
       {/* Painel esquerdo - Inventário */}
-      {painelAberto === 'inventario' && (
+      {painelAberto === 'inventario' && usuario.tipo === 'mestre' && (
         <div className="flex flex-col w-72 bg-[#1a1a2e] border-r border-[#ffffff15] p-5 gap-5 shadow-2xl">
           <div className="flex items-center justify-between border-b border-[#ffffff15] pb-3">
             <div className="flex items-center gap-2">
@@ -144,15 +186,23 @@ function Home({ usuario, mesa, onLogout }) {
             <button onClick={() => setPainelAberto(null)} className="text-gray-400 hover:text-white transition text-lg">«</button>
           </div>
           <div className="flex flex-col gap-3">
-            {usuario.tipo === 'mestre' && (
-              <button
-                onClick={() => setMostrarFormItem(true)}
-                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-                Adicionar item
-              </button>
-            )}
+            <button
+              onClick={() => setMostrarFormItem(true)}
+              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-purple-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+              Adicionar item
+            </button>
           </div>
         </div>
+      )}
+
+      {painelAberto === 'inventario' && usuario.tipo === 'jogador' && personagem && (
+        <PainelHabilidades
+          personagem={personagem}
+          mesa={mesa}
+          modo="itens"
+          onFechar={() => setPainelAberto(null)}
+          onAtualizar={() => carregarPersonagem(personagem)}
+        />
       )}
 
       {/* Menu lateral esquerdo */}
@@ -185,7 +235,11 @@ function Home({ usuario, mesa, onLogout }) {
           <div
             onClick={() => setMostrarFicha(true)}
             className="w-44 h-44 rounded-full overflow-hidden shadow-2xl shadow-blue-900 border-4 border-[#ffffff15] bg-blue-900 flex items-center justify-center cursor-pointer hover:border-purple-500 transition">
-            <img src="/images/Personagem.png" alt="Personagem" className="w-36 h-36 object-contain" />
+            <img 
+              src={personagem?.imagem ? `http://localhost:3001${personagem.imagem}` : '/images/Personagem.png'} 
+              alt="Personagem" 
+              className="w-36 h-36 object-contain" 
+            />
           </div>
           <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#1a1a2e] border border-[#ffffff20] px-4 py-1 rounded-full text-xs tracking-widest text-gray-300 whitespace-nowrap">
             {personagem ? `${personagem.nome} • Nível ${personagem.nivel}` : 'Carregando...'}
@@ -217,27 +271,39 @@ function Home({ usuario, mesa, onLogout }) {
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-gray-600 tracking-widest uppercase">Habilidades</span>
               <div className="flex gap-2">
-                {habilidades.map((habilidade, i) => (
+                {habilidades.filter(h => {
+                  console.log('filtrando:', h._id, 'equipadas:', personagem?.habilidadesEquipadas)
+                  return personagem?.habilidadesEquipadas?.includes(h._id)
+                }).map((habilidade, i) => (
                   <div key={i} title={habilidade.nome} className="w-12 h-12 bg-[#ffffff08] border border-[#ffffff15] rounded-xl flex items-center justify-center hover:border-purple-500 hover:bg-[#ffffff12] transition cursor-pointer shadow-lg">
-                  <img src={`/images/icone-habilidade-${i + 1}.png`} alt={habilidade.nome} className="w-8 h-8 object-contain" />
-                </div>
+                    <img
+                      src={habilidade.imagem ? `http://localhost:3001${habilidade.imagem}` : `/images/icone-habilidade-${i + 1}.png`}
+                      alt={habilidade.nome}
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
                 ))}
             </div>
           </div>
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-gray-600 tracking-widest uppercase">Consumíveis</span>
             <div className="flex gap-2">
-              {[
-                { icon: '/images/icone-item-1.png', qty: 3 },
-                { icon: '/images/icone-item-2.png', qty: 2 }
-              ].map((item, i) => (
-                <div key={i} className="relative w-12 h-12 bg-[#ffffff08] border border-[#ffffff15] rounded-xl flex items-center justify-center hover:border-cyan-500 hover:bg-[#ffffff12] transition cursor-pointer shadow-lg">
-                  <img src={item.icon} alt={`item-${i}`} className="w-8 h-8 object-contain" />
-                  <span className="absolute -bottom-1 -right-1 bg-[#0d0d1a] border border-[#ffffff20] text-xs w-5 h-5 flex items-center justify-center rounded-full text-gray-300">
-                    {item.qty}
-                  </span>
-                </div>
-              ))}
+              {itens.filter(item => personagem?.itensEquipados?.includes(item._id)).map((item, i) => {
+                const inv = personagem?.inventario?.find(inv => inv.itemId === item._id)
+                if (!item) return null
+                return (
+                  <div key={i} className="relative w-12 h-12 bg-[#ffffff08] border border-[#ffffff15] rounded-xl flex items-center justify-center hover:border-cyan-500 hover:bg-[#ffffff12] transition cursor-pointer shadow-lg">
+                    <img
+                      src={item.imagem ? `http://localhost:3001${item.imagem}` : `/images/icone-item-${i + 1}.png`}
+                      alt={item.nome}
+                      className="w-8 h-8 object-contain"
+                    />
+                    <span className="absolute -bottom-1 -right-1 bg-[#0d0d1a] border border-[#ffffff20] text-xs w-5 h-5 flex items-center justify-center rounded-full text-gray-300">
+                      {inv?.quantidade}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -353,6 +419,14 @@ function Home({ usuario, mesa, onLogout }) {
         <FichaPersonagem
           personagem={personagem}
           onFechar={() => setMostrarFicha(false)}
+        />
+      )}
+
+      {mostrarAssociar && personagem && (
+        <AssociarItens
+          personagem={personagem}
+          onFechar={() => setMostrarAssociar(false)}
+          onAtualizar={() => carregarPersonagem(personagem)}
         />
       )}
 

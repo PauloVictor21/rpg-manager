@@ -3,6 +3,8 @@ import api from '../services/api'
 
 function FormPersonagem({ onFechar, onSalvar }) {
   const [classes, setClasses] = useState([])
+  const [imagem, setImagem] = useState(null)
+  const [preview, setPreview] = useState(null)
   const [form, setForm] = useState({
     nome: '',
     classeId: '',
@@ -29,9 +31,17 @@ function FormPersonagem({ onFechar, onSalvar }) {
     }
   }
 
+  const handleImagem = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setImagem(file)
+      setPreview(URL.createObjectURL(file))
+    }
+  }
+
   const handleSalvar = async () => {
     const novoId = `p${Date.now()}`
-    const novoPersonagem = {
+    const dados = {
       _id: novoId,
       ...form,
       nivel: 1,
@@ -40,20 +50,39 @@ function FormPersonagem({ onFechar, onSalvar }) {
       habilidades: [],
       quests: []
     }
-    await api.post('/personagens', novoPersonagem)
+
+    const formData = new FormData()
+    formData.append('dados', JSON.stringify(dados))
+    if (imagem) formData.append('imagem', imagem)
+
+    await api.post('/personagens', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     onSalvar()
     onFechar()
   }
 
   return (
     <div className="fixed inset-0 bg-[#0b0b2c] text-white flex flex-col items-center justify-center z-50 p-8">
-      
       <div className="w-full max-w-lg flex flex-col gap-6">
-        
+
         <div className="flex items-center justify-between">
           <button onClick={onFechar} className="text-gray-400 hover:text-white transition text-2xl">«</button>
           <h2 className="text-lg font-bold tracking-widest uppercase text-gray-300">Adicionar novo personagem</h2>
           <div className="w-6" />
+        </div>
+
+        {/* Upload de imagem */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            onClick={() => document.getElementById('input-imagem').click()}
+            className="w-24 h-24 rounded-full bg-[#ffffff08] border-2 border-dashed border-[#ffffff20] flex items-center justify-center cursor-pointer hover:border-purple-500 transition overflow-hidden">
+            {preview
+              ? <img src={preview} alt="preview" className="w-full h-full object-contain" />
+              : <span className="text-gray-500 text-sm">+ foto</span>
+            }
+          </div>
+          <input id="input-imagem" type="file" accept="image/*" onChange={handleImagem} className="hidden" />
         </div>
 
         <div className="flex flex-col gap-3">
@@ -139,7 +168,11 @@ function FormPersonagem({ onFechar, onSalvar }) {
             Adicionar
           </button>
           <button
-            onClick={() => setForm({ nome: '', classeId: '', vida: '', mana: '', atributos: { forca: '', inteligencia: '', agilidade: '' }, descricao: '' })}
+            onClick={() => {
+              setForm({ nome: '', classeId: '', vida: '', mana: '', atributos: { forca: '', inteligencia: '', agilidade: '' }, descricao: '' })
+              setImagem(null)
+              setPreview(null)
+            }}
             className="flex-1 py-3 bg-red-600 rounded-lg font-bold tracking-widest uppercase text-sm hover:bg-red-700 transition">
             Redefinir
           </button>

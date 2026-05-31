@@ -5,7 +5,8 @@ const itemSchema = new mongoose.Schema({
   nome: String,
   tipo: String,
   raridade: String,
-  efeito: String
+  efeito: String,
+  imagem: String,
 })
 
 export default mongoose.model('Item', itemSchema, 'itens')

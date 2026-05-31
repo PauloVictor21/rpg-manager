@@ -2,6 +2,8 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import { createServer } from 'http'
+import { Server } from 'socket.io'
 import personagensRouter from './routes/personagens.js'
 import classesRouter from './routes/classes.js'
 import habilidadesRouter from './routes/habilidades.js'
@@ -14,9 +16,14 @@ import usuariosRouter from './routes/usuarios.js'
 dotenv.config()
 
 const app = express()
+const httpServer = createServer(app)
+const io = new Server(httpServer, {
+  cors: { origin: '*' }
+})
 
 app.use(cors())
 app.use(express.json())
+app.use('/uploads', express.static('uploads'))
 
 mongoose.connect('mongodb://localhost:27017/rpg-manager')
   .then(() => console.log('MongoDB conectado!'))
@@ -31,4 +38,19 @@ app.use('/auth', authRouter)
 app.use('/mesas', mesasRouter)
 app.use('/usuarios', usuariosRouter)
 
-app.listen(3001, () => console.log('Servidor rodando na porta 3001'))
+io.on('connection', (socket) => {
+  console.log('Cliente conectado:', socket.id)
+
+  socket.on('entrar-mesa', (mesaId) => {
+    socket.join(mesaId)
+    console.log(`Cliente ${socket.id} entrou na sala ${mesaId}`)
+  })
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id)
+  })
+})
+
+export { io }
+
+httpServer.listen(3001, () => console.log('Servidor rodando na porta 3001'))

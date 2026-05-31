@@ -2,6 +2,8 @@ import { useState } from 'react'
 import api from '../services/api'
 
 function FormItem({ onFechar, onSalvar }) {
+  const [imagem, setImagem] = useState(null)
+  const [preview, setPreview] = useState(null)
   const [form, setForm] = useState({
     nome: '',
     tipo: '',
@@ -14,13 +16,28 @@ function FormItem({ onFechar, onSalvar }) {
     setForm(prev => ({ ...prev, [name]: value }))
   }
 
+  const handleImagem = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setImagem(file)
+      setPreview(URL.createObjectURL(file))
+    }
+  }
+
   const handleSalvar = async () => {
     const novoId = `i${Date.now()}`
-    const novoItem = {
+    const dados = {
       _id: novoId,
       ...form
     }
-    await api.post('/itens', novoItem)
+
+    const formData = new FormData()
+    formData.append('dados', JSON.stringify(dados))
+    if (imagem) formData.append('imagem', imagem)
+
+    await api.post('/itens', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     onSalvar()
     onFechar()
   }
@@ -33,6 +50,19 @@ function FormItem({ onFechar, onSalvar }) {
           <button onClick={onFechar} className="text-gray-400 hover:text-white transition text-2xl">«</button>
           <h2 className="text-lg font-bold tracking-widest uppercase text-gray-300">Adicionar item</h2>
           <div className="w-6" />
+        </div>
+
+        {/* Upload de imagem */}
+        <div className="flex flex-col items-center gap-3">
+          <div
+            onClick={() => document.getElementById('input-imagem-item').click()}
+            className="w-24 h-24 rounded-lg bg-[#ffffff08] border-2 border-dashed border-[#ffffff20] flex items-center justify-center cursor-pointer hover:border-purple-500 transition overflow-hidden">
+            {preview
+              ? <img src={preview} alt="preview" className="w-full h-full object-contain" />
+              : <span className="text-gray-500 text-sm">+ foto</span>
+            }
+          </div>
+          <input id="input-imagem-item" type="file" accept="image/*" onChange={handleImagem} className="hidden" />
         </div>
 
         <div className="flex flex-col gap-3">
@@ -86,7 +116,11 @@ function FormItem({ onFechar, onSalvar }) {
             Adicionar
           </button>
           <button
-            onClick={() => setForm({ nome: '', tipo: '', raridade: '', efeito: '' })}
+            onClick={() => {
+              setForm({ nome: '', tipo: '', raridade: '', efeito: '' })
+              setImagem(null)
+              setPreview(null)
+            }}
             className="flex-1 py-3 bg-red-600 rounded-lg font-bold tracking-widest uppercase text-sm hover:bg-red-700 transition">
             Redefinir
           </button>

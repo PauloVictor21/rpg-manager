@@ -34,7 +34,11 @@ function FichaPersonagem({ personagem, onFechar }) {
         {/* Avatar e info básica */}
         <div className="flex items-center gap-4 p-4 rounded-lg bg-[#ffffff06] border border-[#ffffff10]">
           <div className="w-20 h-20 rounded-full overflow-hidden bg-blue-900 border-2 border-[#ffffff15] flex items-center justify-center">
-            <img src="/images/Personagem.png" alt="Personagem" className="w-16 h-16 object-contain" />
+            <img 
+              src={personagem?.imagem ? `http://localhost:3001${personagem.imagem}` : '/images/Personagem.png'} 
+              alt="Personagem" 
+              className="w-16 h-16 object-contain" 
+            />
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xl font-bold text-gray-200">{personagem.nome}</p>

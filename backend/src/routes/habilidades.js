@@ -1,5 +1,6 @@
 import express from 'express'
 import Habilidade from '../models/Habilidade.js'
+import upload from '../upload.js'
 
 const router = express.Router()
 
@@ -21,9 +22,13 @@ router.get('/:id', async (req, res) => {
   }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', upload.single('imagem'), async (req, res) => {
   try {
-    const habilidade = new Habilidade(req.body)
+    const dados = JSON.parse(req.body.dados)
+    if (req.file) {
+      dados.imagem = `/uploads/${req.file.filename}`
+    }
+    const habilidade = new Habilidade(dados)
     await habilidade.save()
     res.status(201).json(habilidade)
   } catch (err) {
