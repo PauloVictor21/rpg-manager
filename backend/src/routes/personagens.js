@@ -63,12 +63,13 @@ router.delete('/:id', async (req, res) => {
 // Mestre associa habilidade disponível ao personagem
 router.put('/:id/habilidades', async (req, res) => {
   try {
-    const { habilidadeId } = req.body
+    const { habilidadeId, mesaId } = req.body
     const personagem = await Personagem.findById(req.params.id)
     if (!personagem) return res.status(404).json({ erro: 'Personagem não encontrado' })
     if (personagem.habilidades.includes(habilidadeId)) return res.status(400).json({ erro: 'Habilidade já associada' })
     personagem.habilidades.push(habilidadeId)
     await personagem.save()
+    if (mesaId) io.to(mesaId).emit('personagem-atualizado', personagem)
     res.json(personagem)
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao associar habilidade' })
@@ -78,13 +79,14 @@ router.put('/:id/habilidades', async (req, res) => {
 // Mestre associa item disponível ao personagem
 router.put('/:id/itens', async (req, res) => {
   try {
-    const { itemId, quantidade } = req.body
+    const { itemId, quantidade, mesaId } = req.body
     const personagem = await Personagem.findById(req.params.id)
     if (!personagem) return res.status(404).json({ erro: 'Personagem não encontrado' })
     const itemExiste = personagem.inventario.find(i => i.itemId === itemId)
     if (itemExiste) return res.status(400).json({ erro: 'Item já associado' })
     personagem.inventario.push({ itemId, quantidade: quantidade || 1 })
     await personagem.save()
+    if (mesaId) io.to(mesaId).emit('personagem-atualizado', personagem)
     res.json(personagem)
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao associar item' })
@@ -152,6 +154,38 @@ router.put('/:id/desequipar-item', async (req, res) => {
     res.json(personagem)
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao desequipar item' })
+  }
+})
+
+// Associar quest ao personagem
+router.put('/:id/quests', async (req, res) => {
+  try {
+    const { questId, mesaId } = req.body
+    const personagem = await Personagem.findById(req.params.id)
+    if (!personagem) return res.status(404).json({ erro: 'Personagem não encontrado' })
+    const questExiste = personagem.quests.find(q => q.questId === questId)
+    if (questExiste) return res.status(400).json({ erro: 'Quest já associada' })
+    personagem.quests.push({ questId, status: 'ativa' })
+    await personagem.save()
+    if (mesaId) io.to(mesaId).emit('personagem-atualizado', personagem)
+    res.json(personagem)
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao associar quest' })
+  }
+})
+
+// Remover quest do personagem
+router.put('/:id/remover-quest', async (req, res) => {
+  try {
+    const { questId, mesaId } = req.body
+    const personagem = await Personagem.findById(req.params.id)
+    if (!personagem) return res.status(404).json({ erro: 'Personagem não encontrado' })
+    personagem.quests = personagem.quests.filter(q => q.questId !== questId)
+    await personagem.save()
+    if (mesaId) io.to(mesaId).emit('personagem-atualizado', personagem)
+    res.json(personagem)
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao remover quest' })
   }
 })
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../services/api'
 
-function AssociarItens({ personagem, onFechar, onAtualizar }) {
+function AssociarItens({ personagem, mesa, onFechar, onAtualizar }) {
   const [habilidades, setHabilidades] = useState([])
   const [itens, setItens] = useState([])
   const [erro, setErro] = useState('')
@@ -17,7 +17,6 @@ function AssociarItens({ personagem, onFechar, onAtualizar }) {
       await api.put(`/personagens/${personagem._id}/habilidades`, { habilidadeId })
       setSucesso('Habilidade associada!')
       setErro('')
-      onAtualizar()
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao associar habilidade')
       setSucesso('')
@@ -29,7 +28,6 @@ function AssociarItens({ personagem, onFechar, onAtualizar }) {
       await api.put(`/personagens/${personagem._id}/itens`, { itemId, quantidade: 1 })
       setSucesso('Item associado!')
       setErro('')
-      onAtualizar()
     } catch (err) {
       setErro(err.response?.data?.erro || 'Erro ao associar item')
       setSucesso('')

@@ -8,6 +8,7 @@ import FormQuest from '../components/FormQuest'
 import GerenciarMesa from './GerenciarMesa'
 import FichaPersonagem from './FichaPersonagem'
 import AssociarItens from '../components/AssociarItens'
+import AssociarQuests from '../components/AssociarQuests'
 import PainelHabilidades from '../components/PainelHabilidades'
 import { socket } from '../services/api'
 
@@ -28,6 +29,7 @@ function Home({ usuario, mesa, onLogout }) {
   const [mostrarGerenciarMesa, setMostrarGerenciarMesa] = useState(false)
   const [mostrarFicha, setMostrarFicha] = useState(false)
   const [mostrarAssociar, setMostrarAssociar] = useState(false)
+  const [mostrarAssociarQuests, setMostrarAssociarQuests] = useState(false)
 
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
@@ -67,13 +69,17 @@ function Home({ usuario, mesa, onLogout }) {
       console.log('entrando na sala da mesa:', mesa._id)
       socket.emit('entrar-mesa', mesa._id)
       socket.on('personagem-atualizado', (personagemAtualizado) => {
-        console.log('evento recebido!', personagemAtualizado.habilidadesEquipadas)
-        setPersonagem(prev => ({ ...prev, 
+        setPersonagem(prev => ({ ...prev,
           habilidadesEquipadas: personagemAtualizado.habilidadesEquipadas,
           itensEquipados: personagemAtualizado.itensEquipados,
           inventario: personagemAtualizado.inventario,
-          habilidades: personagemAtualizado.habilidades
+          habilidades: personagemAtualizado.habilidades,
+          quests: personagemAtualizado.quests
         }))
+
+        const novasQuestIds = personagemAtualizado.quests.map(q => q.questId)
+        Promise.all(novasQuestIds.map(id => api.get(`/quests/${id}`)))
+          .then(res => setQuests(res.map(r => r.data)))
       })
     }
 
@@ -271,10 +277,7 @@ function Home({ usuario, mesa, onLogout }) {
           <div className="flex flex-col items-center gap-2">
             <span className="text-xs text-gray-600 tracking-widest uppercase">Habilidades</span>
               <div className="flex gap-2">
-                {habilidades.filter(h => {
-                  console.log('filtrando:', h._id, 'equipadas:', personagem?.habilidadesEquipadas)
-                  return personagem?.habilidadesEquipadas?.includes(h._id)
-                }).map((habilidade, i) => (
+                {habilidades.filter(h => personagem?.habilidadesEquipadas?.includes(h._id)).map((habilidade, i) => (
                   <div key={i} title={habilidade.nome} className="w-12 h-12 bg-[#ffffff08] border border-[#ffffff15] rounded-xl flex items-center justify-center hover:border-purple-500 hover:bg-[#ffffff12] transition cursor-pointer shadow-lg">
                     <img
                       src={habilidade.imagem ? `http://localhost:3001${habilidade.imagem}` : `/images/icone-habilidade-${i + 1}.png`}
@@ -321,11 +324,20 @@ function Home({ usuario, mesa, onLogout }) {
             </div>
           </div>
           {usuario.tipo === 'mestre' && (
-            <button
-              onClick={() => setMostrarFormQuest(true)}
-              className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-              Adicionar quest
-            </button>
+            <>
+              <button
+                onClick={() => setMostrarFormQuest(true)}
+                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                Adicionar quest
+              </button>
+              {personagem && (
+                <button
+                  onClick={() => setMostrarAssociarQuests(true)}
+                  className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-yellow-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                  Associar quests ao personagem
+                </button>
+              )}
+            </>
           )}
           <div className="flex flex-col gap-4">
             {quests.map((quest, i) => (
@@ -425,7 +437,17 @@ function Home({ usuario, mesa, onLogout }) {
       {mostrarAssociar && personagem && (
         <AssociarItens
           personagem={personagem}
+          mesa={mesa}
           onFechar={() => setMostrarAssociar(false)}
+          onAtualizar={() => carregarPersonagem(personagem)}
+        />
+      )}
+
+      {mostrarAssociarQuests && personagem && (
+        <AssociarQuests
+          personagem={personagem}
+          mesa={mesa}
+          onFechar={() => setMostrarAssociarQuests(false)}
           onAtualizar={() => carregarPersonagem(personagem)}
         />
       )}
