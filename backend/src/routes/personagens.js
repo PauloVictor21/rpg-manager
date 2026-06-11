@@ -32,6 +32,8 @@ router.post('/', upload.single('imagem'), async (req, res) => {
     if (req.file) {
       dados.imagem = `/uploads/${req.file.filename}`
     }
+    dados.vidaAtual = dados.vida
+    dados.manaAtual = dados.mana
     const personagem = new Personagem(dados)
     await personagem.save()
     res.status(201).json(personagem)
@@ -186,6 +188,28 @@ router.put('/:id/remover-quest', async (req, res) => {
     res.json(personagem)
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao remover quest' })
+  }
+})
+
+// Mestre ajusta vida e mana do personagem
+router.put('/:id/status', async (req, res) => {
+  try {
+    const { vidaAtual, manaAtual, mesaId } = req.body
+    const personagem = await Personagem.findById(req.params.id)
+    if (!personagem) return res.status(404).json({ erro: 'Personagem não encontrado' })
+
+    if (vidaAtual !== undefined) {
+      personagem.vidaAtual = Math.max(0, Math.min(vidaAtual, personagem.vida))
+    }
+    if (manaAtual !== undefined) {
+      personagem.manaAtual = Math.max(0, Math.min(manaAtual, personagem.mana))
+    }
+
+    await personagem.save()
+    if (mesaId) io.to(mesaId).emit('personagem-atualizado', personagem)
+    res.json(personagem)
+  } catch (err) {
+    res.status(500).json({ erro: 'Erro ao atualizar status' })
   }
 })
 

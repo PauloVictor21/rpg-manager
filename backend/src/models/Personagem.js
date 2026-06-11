@@ -12,7 +12,9 @@ const personagemSchema = new mongoose.Schema({
     agilidade: Number
   },
   vida: Number,
+  vidaAtual: Number,
   mana: Number,
+  manaAtual: Number,
   imagem: String,
   inventario: [
     {

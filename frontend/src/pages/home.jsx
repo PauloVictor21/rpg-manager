@@ -10,6 +10,7 @@ import FichaPersonagem from './FichaPersonagem'
 import AssociarItens from '../components/AssociarItens'
 import AssociarQuests from '../components/AssociarQuests'
 import PainelHabilidades from '../components/PainelHabilidades'
+import AjustarStatus from '../components/AjustarStatus'
 import { socket } from '../services/api'
 
 function Home({ usuario, mesa, onLogout }) {
@@ -30,6 +31,7 @@ function Home({ usuario, mesa, onLogout }) {
   const [mostrarFicha, setMostrarFicha] = useState(false)
   const [mostrarAssociar, setMostrarAssociar] = useState(false)
   const [mostrarAssociarQuests, setMostrarAssociarQuests] = useState(false)
+  const [mostrarAjustarStatus, setMostrarAjustarStatus] = useState(false)
 
   const carregarPersonagem = async (p) => {
     const questIds = p.quests.map(q => q.questId)
@@ -74,7 +76,9 @@ function Home({ usuario, mesa, onLogout }) {
           itensEquipados: personagemAtualizado.itensEquipados,
           inventario: personagemAtualizado.inventario,
           habilidades: personagemAtualizado.habilidades,
-          quests: personagemAtualizado.quests
+          quests: personagemAtualizado.quests,
+          vidaAtual: personagemAtualizado.vidaAtual,
+          manaAtual: personagemAtualizado.manaAtual
         }))
 
         const novasQuestIds = personagemAtualizado.quests.map(q => q.questId)
@@ -127,11 +131,18 @@ function Home({ usuario, mesa, onLogout }) {
               </>
             )}
             {usuario.tipo === 'mestre' && personagem && (
-              <button
-                onClick={() => setMostrarAssociar(true)}
-                className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-cyan-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
-                Associar habilidades e itens
-              </button>
+              <>
+                <button
+                  onClick={() => setMostrarAssociar(true)}
+                  className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-cyan-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                  Associar habilidades e itens
+                </button>
+                <button
+                  onClick={() => setMostrarAjustarStatus(true)}
+                  className="w-full py-2 px-4 rounded-lg border border-[#ffffff20] text-sm text-gray-300 hover:border-red-500 hover:text-white hover:bg-[#ffffff08] transition tracking-wide text-left">
+                  Ajustar vida e mana
+                </button>
+              </>
             )}
           </div>
 
@@ -256,17 +267,25 @@ function Home({ usuario, mesa, onLogout }) {
         <div className="flex gap-6 mt-4">
           <div className="flex flex-col gap-1 items-center">
             <span className="text-xs text-gray-500 tracking-widest uppercase">Vida</span>
-            <div className="w-48 h-7 bg-[#ffffff08] rounded-full overflow-hidden border border-[#ffffff10]">
-              <div className="h-full bg-gradient-to-r from-red-700 to-red-500 rounded-full flex items-center justify-center text-xs font-bold tracking-wider">
-                {personagem ? `${personagem.vida}/${personagem.vida}` : '...'}
+            <div className="relative w-48 h-7 bg-[#ffffff08] rounded-full overflow-hidden border border-[#ffffff10]">
+              <div
+                className="h-full bg-gradient-to-r from-red-700 to-red-500 rounded-full transition-all duration-300"
+                style={{ width: personagem ? `${(personagem.vidaAtual / personagem.vida) * 100}%` : '100%' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold tracking-wider">
+                {personagem ? `${personagem.vidaAtual}/${personagem.vida}` : '...'}
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-1 items-center">
             <span className="text-xs text-gray-500 tracking-widest uppercase">Mana</span>
-            <div className="w-48 h-7 bg-[#ffffff08] rounded-full overflow-hidden border border-[#ffffff10]">
-              <div className="h-full bg-gradient-to-r from-cyan-700 to-cyan-400 rounded-full flex items-center justify-center text-xs font-bold tracking-wider">
-                {personagem ? `${personagem.mana}/${personagem.mana}` : '...'}
+            <div className="relative w-48 h-7 bg-[#ffffff08] rounded-full overflow-hidden border border-[#ffffff10]">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-700 to-cyan-400 rounded-full transition-all duration-300"
+                style={{ width: personagem ? `${(personagem.manaAtual / personagem.mana) * 100}%` : '100%' }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold tracking-wider">
+                {personagem ? `${personagem.manaAtual}/${personagem.mana}` : '...'}
               </div>
             </div>
           </div>
@@ -449,6 +468,14 @@ function Home({ usuario, mesa, onLogout }) {
           mesa={mesa}
           onFechar={() => setMostrarAssociarQuests(false)}
           onAtualizar={() => carregarPersonagem(personagem)}
+        />
+      )}
+
+      {mostrarAjustarStatus && personagem && (
+        <AjustarStatus
+          personagem={personagem}
+          mesa={mesa}
+          onFechar={() => setMostrarAjustarStatus(false)}
         />
       )}
 
